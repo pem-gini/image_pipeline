@@ -63,7 +63,8 @@ PointCloudXyzNode::PointCloudXyzNode(const rclcpp::NodeOptions & options)
   std::lock_guard<std::mutex> lock(connect_mutex_);
   // TODO(ros2) Implement when SubscriberStatusCallback is available
   // pub_point_cloud_ = nh.advertise<PointCloud>("points", 1, connect_cb, connect_cb);
-  pub_point_cloud_ = create_publisher<PointCloud2>("points", rclcpp::SensorDataQoS());
+  // pub_point_cloud_ = create_publisher<PointCloud2>("points", rclcpp::SensorDataQoS());
+  pub_point_cloud_ = create_publisher<PointCloud2>("points", 1);
 }
 
 // Handles (un)subscribing when clients (un)subscribe

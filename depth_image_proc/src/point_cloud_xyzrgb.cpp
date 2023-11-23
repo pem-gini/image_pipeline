@@ -54,6 +54,8 @@ PointCloudXyzrgbNode::PointCloudXyzrgbNode(const rclcpp::NodeOptions & options)
   // Read parameters
   int queue_size = this->declare_parameter<int>("queue_size", 5);
   bool use_exact_sync = this->declare_parameter<bool>("exact_sync", false);
+  float throttle_hz = this->declare_parameter<float>("throttle_dt", 10.0);
+  throttle_dt = 1.0 / throttle_hz;
 
   // Synchronize inputs. Topic subscriptions happen on demand in the connection callback.
   if (use_exact_sync) {
@@ -89,7 +91,8 @@ PointCloudXyzrgbNode::PointCloudXyzrgbNode(const rclcpp::NodeOptions & options)
   std::lock_guard<std::mutex> lock(connect_mutex_);
   // TODO(ros2) Implement connect_cb when SubscriberStatusCallback is available
   // pub_point_cloud_ = depth_nh.advertise<PointCloud>("points", 1, connect_cb, connect_cb);
-  pub_point_cloud_ = create_publisher<PointCloud2>("points", rclcpp::SensorDataQoS());
+  // pub_point_cloud_ = create_publisher<PointCloud2>("points", rclcpp::SensorDataQoS());
+    pub_point_cloud_ = create_publisher<PointCloud2>("points", 1);
   // TODO(ros2) Implement connect_cb when SubscriberStatusCallback is available
 }
 
@@ -117,6 +120,7 @@ void PointCloudXyzrgbNode::connectCb()
     sub_rgb_.subscribe(this, "rgb/image_rect_color", hints.getTransport());
     sub_info_.subscribe(this, "rgb/camera_info");
   }
+  last = this->get_clock()->now();
 }
 
 void PointCloudXyzrgbNode::imageCb(
@@ -124,6 +128,13 @@ void PointCloudXyzrgbNode::imageCb(
   const Image::ConstSharedPtr & rgb_msg_in,
   const CameraInfo::ConstSharedPtr & info_msg)
 {
+
+  auto dt = this->get_clock()->now() - last;
+  /// throttle max processing frequency
+  if(dt.seconds() < throttle_dt) {
+    return;
+  }
+
   // Check for bad inputs
   if (depth_msg->header.frame_id != rgb_msg_in->header.frame_id) {
     RCLCPP_WARN_THROTTLE(
@@ -249,8 +260,8 @@ void PointCloudXyzrgbNode::imageCb(
       get_logger(), "RGB image has unsupported encoding [%s]", rgb_msg->encoding.c_str());
     return;
   }
-
   pub_point_cloud_->publish(*cloud_msg);
+  last = this->get_clock()->now();
 }
 
 }  // namespace depth_image_proc

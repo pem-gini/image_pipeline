@@ -78,6 +78,10 @@ private:
   void depthCb(
     const Image::ConstSharedPtr & depth_msg,
     const CameraInfo::ConstSharedPtr & info_msg);
+
+  rclcpp::Time last;
+  float throttle_dt;
+
 };
 
 }  // namespace depth_image_proc

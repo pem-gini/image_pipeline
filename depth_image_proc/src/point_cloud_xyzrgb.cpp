@@ -54,7 +54,7 @@ PointCloudXyzrgbNode::PointCloudXyzrgbNode(const rclcpp::NodeOptions & options)
   // Read parameters
   int queue_size = this->declare_parameter<int>("queue_size", 5);
   bool use_exact_sync = this->declare_parameter<bool>("exact_sync", false);
-  float throttle_hz = this->declare_parameter<float>("throttle_dt", 10.0);
+  float throttle_hz = this->declare_parameter<float>("throttle_hz", 10.0);
   throttle_dt = 1.0 / throttle_hz;
 
   // Synchronize inputs. Topic subscriptions happen on demand in the connection callback.
@@ -260,6 +260,7 @@ void PointCloudXyzrgbNode::imageCb(
       get_logger(), "RGB image has unsupported encoding [%s]", rgb_msg->encoding.c_str());
     return;
   }
+
   pub_point_cloud_->publish(*cloud_msg);
   last = this->get_clock()->now();
 }

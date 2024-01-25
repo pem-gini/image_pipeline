@@ -53,6 +53,8 @@ PointCloudXyzNode::PointCloudXyzNode(const rclcpp::NodeOptions & options)
 {
   // Read parameters
   queue_size_ = this->declare_parameter<int>("queue_size", 5);
+  float throttle_hz = this->declare_parameter<float>("throttle_hz", 10.0);
+  throttle_dt = 1.0 / throttle_hz;
 
   // Monitor whether anyone is subscribed to the output
   // TODO(ros2) Implement when SubscriberStatusCallback is available
@@ -86,12 +88,20 @@ void PointCloudXyzNode::connectCb()
       "raw",
       custom_qos);
   }
+  last = this->get_clock()->now();
 }
 
 void PointCloudXyzNode::depthCb(
   const Image::ConstSharedPtr & depth_msg,
   const CameraInfo::ConstSharedPtr & info_msg)
 {
+
+  auto dt = this->get_clock()->now() - last;
+  /// throttle max processing frequency
+  if(dt.seconds() < throttle_dt) {
+    return;
+  }
+
   auto cloud_msg = std::make_shared<PointCloud2>();
   cloud_msg->header = depth_msg->header;
   cloud_msg->height = depth_msg->height;
@@ -117,6 +127,7 @@ void PointCloudXyzNode::depthCb(
   }
 
   pub_point_cloud_->publish(*cloud_msg);
+  last = this->get_clock()->now();
 }
 
 }  // namespace depth_image_proc

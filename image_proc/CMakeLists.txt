@@ -56,6 +56,16 @@ target_compile_definitions(resize
 rclcpp_components_register_nodes(resize "image_proc::ResizeNode")
 set(node_plugins "${node_plugins}image_proc::ResizeNode;$<TARGET_FILE:resize>\n")
 
+# mask library
+ament_auto_add_library(mask SHARED
+  src/mask.cpp
+)
+target_compile_definitions(mask
+  PRIVATE "COMPOSITION_BUILDING_DLL"
+)
+rclcpp_components_register_nodes(mask "image_proc::MaskNode")
+set(node_plugins "${node_plugins}image_proc::MaskNode;$<TARGET_FILE:mask>\n")
+
 # crop_decimate library
 ament_auto_add_library(crop_decimate SHARED
   src/crop_decimate.cpp

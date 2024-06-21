@@ -53,6 +53,7 @@ PointCloudXyzNode::PointCloudXyzNode(const rclcpp::NodeOptions & options)
 {
   // Read parameters
   queue_size_ = this->declare_parameter<int>("queue_size", 5);
+  /// throttle unused atm
   float throttle_hz = this->declare_parameter<float>("throttle_hz", 10.0);
   throttle_dt = 1.0 / throttle_hz;
 
@@ -95,12 +96,6 @@ void PointCloudXyzNode::depthCb(
   const Image::ConstSharedPtr & depth_msg,
   const CameraInfo::ConstSharedPtr & info_msg)
 {
-
-  auto dt = this->get_clock()->now() - last;
-  /// throttle max processing frequency
-  if(dt.seconds() < throttle_dt) {
-    return;
-  }
 
   auto cloud_msg = std::make_shared<PointCloud2>();
   cloud_msg->header = depth_msg->header;
